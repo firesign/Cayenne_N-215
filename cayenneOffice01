@@ -1,0 +1,71 @@
+// New office sensor pack, using Cayenne
+// January 23, 2018
+
+//#define CAYENNE_DEBUG         // Uncomment to show debug messages
+#define CAYENNE_PRINT Serial  // Comment this out to disable prints and save space
+#include <CayenneEthernet.h>
+#include <DHT.h>;
+
+//DHT Constants
+#define DHTPIN 7     // what pin we're connected to
+#define DHTTYPE DHT22   // DHT 22  (AM2302)
+DHT dht(DHTPIN, DHTTYPE); //// Initialize DHT sensor for normal 16mhz Arduino
+
+// Cayenne authentication token. This should be obtained from the Cayenne Dashboard.
+char token[] = "bmsfyn3idd";
+// Virtual Pin of the widgets.
+
+
+#define VIRTUAL_PIN_SENSOR0 V0   // Light sensor
+#define VIRTUAL_PIN_SENSOR1 V1   // DHT22 temperature
+#define VIRTUAL_PIN_SENSOR2 V2   // DHT22 humidity
+#define VIRTUAL_PIN_SENSOR3 V3   // Motion sensor
+
+
+//Sensor init
+int lightSensorPin = A0;        // analog source for light sensor
+int motionPin = 9;              // digital source for motion sensor
+float hum;                      // Stores humidity value
+float temp;                     // Stores temperature value
+byte motion = 0;                // Stores motion sensor
+
+void setup()
+{
+  Serial.begin(9600);
+  Cayenne.begin(token);
+  dht.begin();
+  pinMode(motionPin, INPUT);     // declare motion sensor as input
+}
+
+void loop()
+{
+  Cayenne.run();
+}
+
+CAYENNE_OUT(VIRTUAL_PIN_SENSOR0) {
+  // Read data from the sensor and send it to the virtual channel here.
+  int light;
+  light = analogRead(lightSensorPin);
+  Cayenne.virtualWrite(VIRTUAL_PIN_SENSOR0, light);
+}
+
+CAYENNE_OUT(VIRTUAL_PIN_SENSOR1) {
+  // Read data from the sensor and send it to the virtual channel here.
+  temp = dht.readTemperature();
+  //delay(500);
+  Cayenne.celsiusWrite(VIRTUAL_PIN_SENSOR1, temp);
+}
+
+CAYENNE_OUT(VIRTUAL_PIN_SENSOR2) {
+  // Read data from the sensor and send it to the virtual channel here.
+  hum = dht.readHumidity();
+  delay(500);
+  Cayenne.celsiusWrite(VIRTUAL_PIN_SENSOR2, hum);
+}
+
+CAYENNE_OUT(VIRTUAL_PIN_SENSOR3) {
+  // Read data from the sensor and send it to the virtual channel here.
+  motion = digitalRead(motionPin);
+  Serial.println(motion);
+  Cayenne.celsiusWrite(VIRTUAL_PIN_SENSOR3, motion);
+}
